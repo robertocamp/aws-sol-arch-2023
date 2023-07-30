@@ -111,12 +111,11 @@ Remember to always follow the principle of least privilege (POLP), giving the mi
   + if all looks good, connect: `aws ssm start-session --target i-04a6ca4731154af44  --region us-west-2`
 - service limits: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
 - EC2 meta data:
-``````
+```
 TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
 && curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/
 ```
 
- 
 #### ex2.3 pricing model
 #### ex2.4 launch image based on existing storage volume
 
