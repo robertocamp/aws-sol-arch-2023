@@ -82,12 +82,47 @@ Remember to always follow the principle of least privilege (POLP), giving the mi
 - sustainabilty pillar
 ### Compute Services
 - instance types: https://aws.amazon.com/ec2/instance-types/
+#### ex2.1
 - `chmod 400 sa2023.pem`
 - `ssh -i "sa2023.pem" ec2-user@ec2-52-24-255-152.us-west-2.compute.amazonaws.com`
 - `cat /etc/os-release`
-- 
+- `aws ec2 describe-instances --region us-west-2 --query 'Reservations[*].Instances[*].[InstanceId, InstanceType]' --output text`
+#### ex2.2
+- `ssh -i "sa2023.pem" ec2-user@ec2-54-184-88-73.us-west-2.compute.amazonaws.com`
+- `aws ec2 describe-instances --region us-west-2 --query 'Reservations[*].Instances[*].[InstanceId, InstanceType]' --output text`
+#### Session Manager
+- plugin installation: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+- `cd ~/downloads`
+- `curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac_arm64/sessionmanager-bundle.zip" -o "sessionmanager-bundle.zip"`
+- `cp ~/Downloads/sessionmanager-bundle.zip ~/aws`
+- `cd ~/aws`
+- `unzip sessionmanager-bundle.zip`
+- `sudo ./sessionmanager-bundle/install -i /usr/local/sessionmanagerplugin -b /usr/local/bin/session-manager-plugin`
+  + The installer installs the Session Manager plugin at /usr/local/sessionmanagerplugin and creates the symlink session-manager-plugin in the /usr/local/bin directory. 
+  + This eliminates the need to specify the install directory in the user's $PATH variable.
+  + `session-manager-plugin`
+  + `aws ssm start-session --target i-04a6ca4731154af44`
+- session manager warning: ![session manager warning](IMG/aws-session-manager-warning.png)
+- get the instance ID of the instance you want to work with: `aws ec2 describe-instances --instance-ids i-04a6ca4731154af44 --region us-west-2 --query 'Reservations[*].Instances[*].IamInstanceProfile.Arn' --output text`
+- `aws iam list-attached-role-policies --role-name role-name --query 'AttachedPolicies[*].PolicyName' --output text`
+- **session manager checkout commands**
+  + `aws iam get-instance-profile --instance-profile-name AmazonSSMRoleForInstancesQuickSetup --query 'InstanceProfile.Roles[*].RoleName' --output text`
+  + `aws iam list-attached-role-policies --role-name AmazonSSMRoleForInstancesQuickSetup --query 'AttachedPolicies[*].PolicyName' --output text`
+  + if all looks good, connect: `aws ssm start-session --target i-04a6ca4731154af44  --region us-west-2`
+- service limits: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
+- EC2 meta data:
+``````
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
+&& curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/
+```
+
+ 
+#### ex2.3 pricing model
+#### ex2.4 launch image based on existing storage volume
+
 ### AWS Storage
 ### AWS VPC
+- VPC NAT gateway: ![nat gateway](IMG/aws-nat-gtwy.png)
 ### Database Services
 ### Authentication and Authorization (AWS IAM)
 ### CloudTrail, CloudWatch, and AWS Config
