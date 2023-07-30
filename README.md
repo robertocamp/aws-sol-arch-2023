@@ -118,6 +118,23 @@ TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metad
 
 #### ex2.3 pricing model
 #### ex2.4 launch image based on existing storage volume
+- `aws ec2 create-image --instance-id i-04a6ca4731154af44 --name "sa2023-ci" --description "ex2.4" --region us-west-2`
+- `aws ec2 run-instances --image-id ami-0ec29a6c0bc62b92a --count 1 --instance-type t2.micro --key-name sa2023 --security-group-ids sg-04aad9097353bcab8 --subnet-id subnet-4dd12635 --region us-west-2 `
+#### ex2.5 create Launch Template and launch instance
+#### ex2.6 aws cli ec2 example
+- list AMIs in a given region: `aws ec2 describe-images --owners 137112412989 --filters "Name=name,Values=amzn2-ami-hvm-2.0*" --region us-west-2 --query 'Images[*].[ImageId,CreationDate]' --output table | sort -k2 -r`
+- get AMI from console: ami-0ea832bf7873542df
+```
+aws ec2 run-instances --image-id ami-0ea832bf7873542df --count 1 \
+--instance-type t2.micro --key-name sa2023 \
+--security-group-ids sg-095a9921c6557a262 --subnet-id subnet-4dd12635 \
+--user-data file://SHEll/0-user-data.sh \
+--tag-specifications \
+'ResourceType=instance, Tags[{Key=webserver, Value=sa2023-demo}]' \
+'ResourceType=volume, Tags=[{Key=cost-center, Value=ca2023}]'
+```
+
+
 
 ### AWS Storage
 ### AWS VPC
