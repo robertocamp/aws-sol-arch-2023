@@ -81,6 +81,11 @@ Remember to always follow the principle of least privilege (POLP), giving the mi
 - cost optimization
 - sustainabilty pillar
 ### Compute Services
+- instance types: https://aws.amazon.com/ec2/instance-types/
+- `chmod 400 sa2023.pem`
+- `ssh -i "sa2023.pem" ec2-user@ec2-52-24-255-152.us-west-2.compute.amazonaws.com`
+- `cat /etc/os-release`
+- 
 ### AWS Storage
 ### AWS VPC
 ### Database Services
@@ -89,7 +94,7 @@ Remember to always follow the principle of least privilege (POLP), giving the mi
 - `aws cloudtrail update-trail --name management-events-test --no-include-global-service-events`
 ### The Domain Name System and Network Routing: AWS R53 and Amazon CloudFront
 ### Data Ingestion, Transformation an d Analytics
-
+cat /etc/os-release
 ## Architecting for Requirements
 ### Resilient Architectures
 ### High-Performance Architectures
