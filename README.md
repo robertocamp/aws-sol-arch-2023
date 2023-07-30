@@ -122,7 +122,7 @@ TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metad
 
 ### AWS Storage
 ### AWS VPC
-- VPC NAT gateway: ![nat gateway](IMG/aws-nat-gtwy.png)
+- VPC NAT gateway: ![session manager warning](IMG/aws-nat-gtwy.png)
 ### Database Services
 ### Authentication and Authorization (AWS IAM)
 ### CloudTrail, CloudWatch, and AWS Config
