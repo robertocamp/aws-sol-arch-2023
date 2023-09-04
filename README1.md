@@ -1,18 +1,50 @@
 # 2023-09-04 09:13:00
 ## aws skills builder exam prep
-## exam domains
-## Domain1: Secure Architecutres
-## Domain2: Design Resilient Architectures
-## Domain3: Design high-performing Architectures
-## Domain4: Design cost-optimizied Architecutres
+### exam domains
+#### Domain1: Secure Architecutres
+#### Domain2: Design Resilient Architectures
+#### Domain3: Design high-performing Architectures
+#### Domain4: Design cost-optimizied Architecutres
 
-## practice test
-Incorrect. VPC peering will provide connectivity to the other Availability Zone. However, VPC peering does not ensure high availability because the EC2 instances are still in one Availability Zone.
+### practice test
+1. An application runs on two Amazon EC2 instances behind a Network Load Balancer. The EC2 instances are in a single Availability Zone.
+  - What should a solutions architect do to make this architecture more highly available?
+  - answer: place the EC2 instances in an Auto-Scaling group that extends across multiple Availability Zones.
 
-Incorrect. The replacement of the Network Load Balancer with an Application Load Balancer provides no additional availability. Both load balancers are inherently highly available. However, the EC2 instances would be highly available only if they extended across two Availability Zones.
+- Incorrect: VPC peering will provide connectivity to the other Availability Zone. However, VPC peering does not ensure high availability because the EC2 instances are still in one Availability Zone.
 
-Incorrect. Failover routing requires a primary destination and a secondary (failover) destination. No failover destination is specified in this solution. In addition, this approach does not ensure high availability because the EC2 instances are still in one Availability Zone.
+- Incorrect: The replacement of the Network Load Balancer with an Application Load Balancer provides no additional availability. Both load balancers are inherently highly available. However, the EC2 instances would be highly available only if they extended across two Availability Zones.
 
+- Incorrect: Failover routing requires a primary destination and a secondary (failover) destination. No failover destination is specified in this solution. In addition, this approach does not ensure high availability because the EC2 instances are still in one Availability Zone.
+
+- links:
+  + VPC peering: https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html
+  + elastic load balancing: https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html
+  + DNS failover: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-configuring.html
+
+2. A company has an on-premises application that exports log files about users of a website. These log files range from 20 GB to 30 GB in size. A solutions architect has created an Amazon S3 bucket to store these files. The files will be uploaded directly from the application. The network connection experiences intermittent failures, and the upload sometimes fails.
+
+- A solutions architect must design a solution that resolves this problem. The solution must minimize operational overhead.
+- answer: use multi-part upload to Amazon S3
+- With a single PUT operation, you can upload a single object that is up to 5 GB in size. 
+- You can use a multipart upload to upload larger files, such as the files in this scenario.
+- Incorrect. S3 Transfer Acceleration facilitates quicker uploads by using edge locations to copy data into Amazon S3. S3 Transfer Acceleration does not solve the problem of the file size limitation (5 GB) for a single PUT operation.
+- Incorrect. This solution does not solve the problem of the file size limitation (5 GB) for a single PUT operation. S3 Lifecycle policies cannot transfer files from EC2 block storage to Amazon S3. This solution also adds unnecessary services and operational overhead to the environment.
+- Incorrect. This solution does not solve the problem of the file size limitation (5 GB) for a single PUT operation. Each destination Region would have the same problem as a single Region. This solution also adds operational overhead.
+
+- links:
+  + S3 transfer acceleration: https://aws.amazon.com/s3/transfer-acceleration/
+  + EC2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html
+  + multi-link upload: https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
+  + S3 bucket replication: https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-walkthrough1.html
+
+3. A company needs to look up configuration details about how a Linux-based Amazon EC2 instance was launched.
+- Which command should a solutions architect run on the EC2 instance to gather the system metadata?
+
+
+
+
+Which solution will meet these requirements?
 Incorrect. S3 Transfer Acceleration facilitates quicker uploads by using edge locations to copy data into Amazon S3. S3 Transfer Acceleration does not solve the problem of the file size limitation (5 GB) for a single PUT operation.
 
 Incorrect. This solution does not solve the problem of the file size limitation (5 GB) for a single PUT operation. S3 Lifecycle policies cannot transfer files from EC2 block storage to Amazon S3. This solution also adds unnecessary services and operational overhead to the environment.
