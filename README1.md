@@ -37,6 +37,7 @@
   + EC2: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html
   + multi-link upload: https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
   + S3 bucket replication: https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-walkthrough1.html
+  + Protecting data with encryption: https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingEncryption.html
 
 3. A company needs to look up configuration details about how a Linux-based Amazon EC2 instance was launched.
 - Which command should a solutions architect run on the EC2 instance to gather the system metadata?
@@ -252,3 +253,307 @@
   + AWS Lambda: https://docs.aws.amazon.com/lambda/latest/dg/welcome.html
   + Amazon EKS: https://docs.aws.amazon.com/whitepapers/latest/overview-deployment-options/amazon-elastic-kubernetes-service.html
   + instance scheduler: https://aws.amazon.com/solutions/implementations/instance-scheduler/
+
+## AWS Certified Solutions Architect Study Guide
+### Assessment Test
+####  public subnets
+- A subnet is considered "public" if it has a direct route to the internet, typically through a main route in its route table directed to the VPC's internet gateway
+- *note:* For a subnet to be considered "public" in the context of an Amazon VPC, its associated route table must have a default route (0.0.0.0/0 for IPv4 and ::/0 for IPv6) that points to an Internet Gateway (IGW) as its target.
+
+##### operational implications
+- *EC2 Instances in a Public Subnet:*
+  + If you place an EC2 instance in a public subnet and assign it an Elastic IP or Public IP, it can directly communicate with the internet, as long as the security group and network ACLs allow the relevant traffic. 
+  + This makes it suitable for hosting a web server or a load balancer.
+- *Egress:*
+  + Instances can directly initiate connections to the internet (e.g., for software updates).
+- *Ingress:* The internet can initiate connections to the instance if permitted by security groups and network ACLs.
+
+####  private subnets
+- A subnet is considered "private" if it doesn't have a direct route to the internet. 
+- Instances in a private subnet cannot directly communicate with the internet. 
+- They can access the internet only by routing their traffic through a Network Address Translation (NAT) gateway or NAT instance located in a public subnet.
+##### operational implications
+- *EC2 Instances in a Private Subnet:*
+  + These instances cannot directly communicate with the internet.
+  + They can communicate with the internet only if they route their traffic through a NAT device. 
+  + This is ideal for databases or application servers that shouldn't be directly accessed from the internet.
+- *Egress:*
+-  For instances to initiate outbound connections to the internet (e.g., for software updates), you'd typically use a NAT gateway or NAT instance.
+- *Ingress:*
+  + The internet cannot initiate connections to instances in a private subnet.
+
+#### DynamoDB use cases
+- storing large binary files exceeding 1GB in size is not a good use case for Amazon DynamoDB.
+- DynamoDB is designed for high-performance, low-latency workloads that require quick access to data. 
+- It's primarily used for storing structured data in key-value format.
+- The **maximum size for an individual item** (including all attribute names and values) in DynamoDB is **400 KB**, which means storing large binary files directly in DynamoDB is not feasible.
+
+##### DynamoDB with S3
+- It's common to store the actual binary files in Amazon Simple Storage Service (S3) and then store a reference (like the S3 object URL or key, aka "metadata") in DynamoDB. 
+- This way, you can benefit from the scalability and durability of S3 for storing large files and the quick access and querying capabilities of DynamoDB for metadata and references.
+##### DynamoDB global secondary index ("GSI")
+- you can create a global secondary index (GSI) for an existing DynamoDB table at any time
+- When you create a GSI on an existing table, DynamoDB will asynchronously build the index on the existing table data. 
+- During this build phase, you can continue to read and write items to the table. 
+- Once the index is built, DynamoDB will automatically keep the GSI synchronized with the base table whenever data is written, updated, or deleted.
+- **considerations:**
+  + Provisioned Throughput: 
+    + If your table uses provisioned throughput, then creating a GSI will consume write capacity units from the table. This is because DynamoDB writes items to the index at the same time as writing to the table.
+  + Costs: 
+    + GSIs add to the overall cost because you're effectively storing additional copies of your data, albeit in a different structure. 
+    + Also, the read and write capacity assigned to the GSI can affect costs.
+  + Attribute Projections: 
+    + When creating a GSI, you specify which attributes you want to project into the index. 
+    + This can be just the index key attributes ("KEYS_ONLY"), all of the table's attributes ("ALL"), or a custom set of attributes ("INCLUDE").
+  + Limits: 
+    + DynamoDB has limits on the number of GSIs you can create per table.
+  
+  + Consistency: 
+    + GSIs provide "eventually consistent" reads by default, but you can request strongly consistent reads if required.
+  > When planning to add a GSI to an existing table, always evaluate the impact on costs, performance, and provisioned throughput.
+
+#### RDS and RPO
+- Recovery Point Objective (RPO) refers to the amount of data you can afford to lose in the event of a disaster. 
+- To achieve an RPO of less than 10 minutes, you would ideally want a backup mechanism that ensures no more than 10 minutes of data is lost.
+- Enabling point-in-time recovery for Amazon RDS provides the ability to restore data from a specific time, down to a second, within your retention period. 
+- The retention period can be set to a value from 1 to 35 days. 
+- However, this does not guarantee an RPO of less than 10 minutes.
+
+#### encryption and access kyes
+- *AWS Secrets Manager:*
+
+  + What it is: 
+    - AWS Secrets Manager is a service that helps you protect access to your applications, services, and IT resources without the upfront infrastructure setup and on-going maintenance costs of operating your own infrastructure.
+  + Use Cases:
+    - Secrets Rotation: Automate the rotation of secrets (like database credentials) seamlessly without needing to make code changes.
+    - Secure & Centralize Secrets Storage: Store sensitive information, such as database credentials, API keys, and third-party service credentials securely.
+    - Integrate with AWS Services: Retrieve secrets in applications using the AWS SDK or CLI.
+
+- *CloudHSM:*
+
+  + What it is: 
+    - AWS CloudHSM is a cloud-based hardware security module (HSM) that enables you to easily generate and use your own encryption keys in the AWS Cloud.
+  + Use Cases:
+    - Regulatory Compliance: For organizations that need to meet stringent regulatory standards for data security (e.g., FIPS 140-2 Level 3).
+    - Key Storage & Management: Securely generate, store, and manage cryptographic keys.
+    - Offload SSL Processing: For applications with heavy SSL/TLS traffic, the HSM can offload SSL termination.
+    - Application-level Encryption: Integrate with applications to encrypt sensitive data before storing it in databases or storage systems.
+
+- *AWS Key Management Service (KMS):*
+
+  + What it is: 
+    - AWS KMS is a managed service that makes it easy for you to create and control customer master keys (CMKs), the cryptographic keys used to encrypt and decrypt your data.
+  + Use Cases:
+    - Integrated with AWS Services: Use it with other AWS services to encrypt data in S3, EBS, RDS, Redshift, etc.
+  + Centralized Key Management: Centrally manage and enforce encryption key usage policies across AWS services.
+  + Application Data Encryption: Encrypt application data by integrating with the AWS Encryption SDK.
+
+- *AWS Security Token Service (STS):*
+
+  + What it is: 
+    - AWS STS is a web service that enables you to request temporary, limited-privilege credentials for AWS Identity and Access Management (IAM) users or for users that you authenticate (federated users).
+  + Use Cases:
+    - Temporary Security Credentials: Instead of distributing long-term AWS security credentials, grant temporary access to AWS services.
+    - Federation: Federate (establish trust between) an identity provider and AWS, letting external identities (like in an Active Directory or a Google account) assume an IAM role.
+    - Cross-Account Access: Allow users from one AWS account to access resources in another account.
+    - Enhanced Security: Combined with Multi-Factor Authentication (MFA), enhance the security for accessing AWS resources.
+
+##### AWS STS token vs IAM access keys
+- **Tokens from AWS STS:**
+  + Temporary Credentials: STS provides temporary security credentials that you can use to access AWS services. 
+  + These credentials consist of an Access Key ID, a Secret Access Key, and a Session Token.
+  + Short-lived: These credentials have a limited lifespan, ranging from a few minutes to a maximum of 36 hours (with some exceptions like roles for EC2 instances which can last longer).
+- **Use Cases:**
+  + Federated user access (users from an external identity provider).
+  + Cross-account access.
+  + Granting limited-time access to resources.
+  + Assigning permissions to applications running on EC2 without permanent credentials.
+  + Enhanced Security: Because these credentials are short-lived, even if they are compromised, the potential window for malicious activity is reduced.
+
+- **IAM Access Keys:**
+
+  + Long-term Credentials: IAM access keys are long-term credentials associated with an IAM user or the AWS account root user. 
+  + They consist of an Access Key ID and a Secret Access Key.
+  + *Permanent until Deleted:* These keys remain valid until they are explicitly rotated or deleted by an AWS administrator.
+- **Use Cases:**
+  + Programmatic access to AWS services via SDKs, CLI, or direct API calls.
+  + Setting up AWS CLI on a workstation.
+  + Security Implication: Because these keys are long-lived, they should be managed very carefully. 
+  + *It's recommended not to use root user access keys and to rotate IAM user keys regularly.*
+  +  Avoid embedding these keys in code.
+
+#### EC2 metrics and CloudWatch
+##### What is CloudWatch?
+- Amazon CloudWatch is a monitoring and observability service built for developers, system operators, site reliability engineers (SREs), and IT managers. 
+- CloudWatch provides data and actionable insights that monitor AWS resources, applications, and services that run on AWS and on-premises servers. 
+- *use cases and functionalities of CloudWatch:*
+  + *Resource Monitoring:* Monitor AWS resources such as EC2 instances, RDS databases, and more. By default, CloudWatch offers several standard metrics like CPU utilization, disk I/O, and network I/O.
+  + *Custom Metrics:* Beyond the default metrics, you can publish your own custom metrics to CloudWatch, whether from your applications, on-premises resources, or third-party platforms.
+  + *Logging:* With **CloudWatch Logs**, you can collect and analyze logs from your EC2 instances, AWS Lambda functions, and more. 
+    - This can help in troubleshooting and archiving.
+  + *Alarms:* Set alarms based on any metric or log pattern to notify you or take automated actions when a threshold is breached. 
+   - For instance, you could set an alarm if CPU utilization on an EC2 instance goes above 90% for 10 minutes
+  + *Events:* CloudWatch Events allows you to respond to changes in your AWS resources. 
+    + You can set up triggers based on AWS API calls, resource state changes, or scheduled events. 
+    + This feature has now evolved into Amazon EventBridge.
+  + Dashboards: Create customizable dashboards to monitor your resources and applications in one place.      
+    + These dashboards can be set to display data in various formats and can be shared.
+  + *Anomaly Detection:*  Utilizing machine learning algorithms, CloudWatch can detect anomalies in your metrics, helping you identify unexpected behavior.
+  + *ServiceLens and X-Ray Integration:* CloudWatch ServiceLens provides a visual representation of the health, performance, and availability of applications in the form of service maps. 
+    - It is integrated with AWS X-Ray, which offers insights into the behavior of your applications, helping understand how they are performing and where bottlenecks are occurring.
+  + *Log Insights:* Quickly analyze and visualize logs with CloudWatch Log Insights. 
+    - This is particularly useful for extracting meaningful data from large volumes of logs.
+  + *Lambda Insights:* Provides a more in-depth view of the performance and health of your AWS Lambda functions.
+  + *Storage Lens:* Offers organization-wide visibility into object storage usage, activity trends, and makes actionable recommendations to optimize costs and apply data protection best practices.
+
+##### CloudWatch and EC2 metrics
+- Amazon EC2 does not automatically send instance memory utilization data to CloudWatch. 
+- By default, EC2 sends various instance-level metrics, such as *CPU utilization*, *disk I/O*, and *network traffic*. 
+- However, memory usage is an operating system-level metric, and EC2 does not have inherent visibility into the OS metrics without additional configuration.
+
+#### CloudTrail vs CloudWatch
+##### AWS CloudTrail:
+- **Purpose:** CloudTrail primarily focuses on auditing and governance by *logging API calls* in your AWS account.
+
+- *What It Captures:*
+  + Tracks user activity and API usage.
+  + Records every API call made in your AWS account, including who made the call, from which IP address, and when.
+  + Captures the requests made to AWS resources, whether from the AWS Management Console, SDKs, CLI, or other AWS services.
+- *Use Cases:*
+  + Security analysis and audit.
+  + Track changes to AWS resources.
+  + Compliance reporting.
+- *Retention:*  Without configuration, CloudTrail provides a *90-day view of account activity*. 
+  + For longer retention and further analysis, trails can be set up to deliver logs to an S3 bucket.
+- *Delivery:* Delivers *event logs as files to an Amazon S3 bucket*, which you can then analyze or archive as needed. 
+  + Optionally, you can also have *CloudTrail logs sent to CloudWatch Logs for monitoring or custom processing*.
+
+##### Amazon CloudWatch:
+- *Purpose:* CloudWatch is geared towards performance monitoring and operational health insights.
+
+- *What It Captures:*
+- Collects and tracks metrics from AWS services and your applications.
+- Monitors resource utilization, application performance, and operational health.
+- Can collect *logs from EC2 instances, CloudTrail, and other sources*.
+- *Use Cases:*
+  + Real-time performance monitoring and dashboards.
+  + Set alarms for specific conditions (e.g., when CPU utilization goes above a certain threshold).
+  + React to operational changes or anomalies.
+  + Collect and analyze application and system logs.
+- *Retention:* CloudWatch retains metric data depending on the granularity:
+  + Data points with a period of less than 60 seconds are available for 3 hours.
+  + Data points with a period of 60 seconds (1-minute granularity) are available for 15 days.
+  + Data points with a period of 300 seconds (5-minute granularity) are available for 63 days.
+  + Data points with a period of 3,600 seconds (1-hour granularity) are available for 455 days (15 months).
+  + Delivery: Metrics and logs are sent directly to CloudWatch. You can create dashboards, set alarms, and visualize log data directly within the CloudWatch console.
+###### In Summary:
+- CloudTrail is more about "Who did what in my AWS account?"
+- CloudWatch is more about "How is my AWS environment and applications performing?"
+
+#### Amazon Route53
+##### Latency Routing (Latency-Based Routing):
+- Purpose: Directs traffic to the AWS resource that provides the lowest latency for the end user.
+- How it Works: When you create latency-based records, you define latency regions (e.g., US-West, Asia-Pacific). 
+- Route 53 uses the latency between the user and the various AWS regions to determine which record to return.
+- Use Case: Ideal for global applications hosted in multiple AWS regions, ensuring users connect to the region with the fastest response times.
+
+##### Geolocation Routing
+- Purpose: Directs traffic based on the geographic location of your users.
+- How it Works: You set up rules that specify the AWS resources to which you want to route traffic for specific geographic locations. 
+- For instance, all requests from Europe could be routed to an EC2 instance in the EU region.
+- Use Case: Satisfying content licensing requirements for certain locations or offering location-specific content or experiences.
+
+##### GeoProximity Routing (traffic flow only)
+- Purpose: Routes traffic based on the location of your resources and, optionally, considers the location of your users.
+- How it Works: You can bias traffic towards or away from specific resources by specifying positive or negative bias values. 
+- This allows for more granular, weight-based geolocation decisions.
+- Use Case: Helps distribute requests more evenly among endpoints, or to weight one endpoint higher than another for users in a given location.
+
+##### Edge Routing
+- "Edge routing" is not a standard term or policy specifically related to Route 53. 
+- However, AWS has "edge locations" as part of its Amazon CloudFront service, which is a Content Delivery Network (CDN). 
+- *CloudFront routes user requests to the nearest edge location to serve cached content with lower latency*.
+
+#### EC2 auto-scaling
+##### Simple Scaling Policy:
+- Definition: This policy increases or decreases the number of EC2 instances based on a single CloudWatch alarm. 
+- When the alarm is triggered, EC2 Auto Scaling adjusts the number of instances by a fixed amount (either a set number or percentage).
+- Pros: It's straightforward to set up.
+- Cons: It's less flexible and might not react quickly enough to rapid changes in workload.
+- Use Case: Suitable for more predictable workloads where you know how much you need to scale when a certain threshold is reached.
+
+##### Step Scaling Policy:
+- Definition: This policy adjusts the number of EC2 instances in steps, where each step corresponds to a specific CloudWatch alarm threshold. 
+- When a threshold is breached, the policy scales the group by a set number of instances.
+- Pros: Offers more control over scaling in situations where the amount you scale depends on how severe the alarm breach is.
+- Cons: Requires more setup than simple scaling as you define multiple thresholds and scaling adjustments.
+- Use Case: Useful for workloads where the required scaling might vary based on how much a metric is above or below the threshold. 
+- For example, if CPU usage is slightly above 70%, you might add 2 instances, but if it's above 90%, you might add 5 instances.
+- step scaling contains an additional parameter called **"PercentChangeInCapacity"**
+- When you're defining a Step Scaling policy, you're essentially telling AWS: "If a certain CloudWatch metric goes beyond or falls below specific thresholds, then adjust my capacity by a certain amount." 
+  + That adjustment can be specified in two ways:
+     - Adjustment Type as an *Absolute Number*: For instance, increase by 2 instances or decrease by 3 instances. 
+     - This is often specified as ChangeInCapacity.
+
+     - Adjustment Type as a *Percentage of the Current Capacity*: 
+     - This is where PercentChangeInCapacity comes into play. 
+     - For example, if you specify a 10% increase and you currently have 20 instances, it would add 2 more instances. 
+     - Conversely, if you have 10 instances, it would add 1 instance.
+
+##### Target Tracking Scaling Policy
+- Definition: Instead of responding to CloudWatch alarms, this policy automatically adjusts the number of EC2 instances to maintain a target value for a specific metric (e.g., average CPU utilization of 50%). 
+- EC2 Auto Scaling performs as many scaling activities as required to keep the metric close to the target.
+- Pros: Simplifies the setup as you only specify the metric and the target. 
+- Auto Scaling handles the rest. Reacts quickly to changes in workload.
+- Cons: Less granular control compared to step scaling.
+- Use Case: Ideal for workloads where you want to maintain a consistent level of a metric, like keeping CPU utilization near a specific percentage.
+
+
+#### ElastiCache and persistent data
+> Amazon ElastiCache can be used to store persistent data, but with caveats and depending on the underlying engine you select
+
+##### Redis
+- Supports persistence. 
+- You can take snapshots of your Redis DB, store them in Amazon S3, and then restore them if needed. 
+- This means that if you need a durable cache where data is not lost even if the cache node fails, Redis with persistence enabled in ElastiCache is a suitable option.
+- Offers **two types of persistence**: RDB snapshots and AOF logs.
+- RDB provides point-in-time snapshots which are stored in S3.
+- AOF logs every write operation, providing a more granular persistence option but with some performance overhead.
+- While persistence offers data durability, *it's important to remember that Redis (even with persistence enabled) is primarily an in-memory data store*, so it's not a replacement for traditional persistent databases.
+
+##### Memcached
+- Does not support persistence. 
+- Memcached is purely an in-memory key-value store, and data stored in Memcached is ephemeral. 
+- If a Memcached node fails or is restarted, all the data in that node is lost.
+
+
+#### S3 and cross-region replication
+- Amazon S3 cross-region replication (CRR) does not use S3 Transfer Acceleration.
+- *S3 Transfer Acceleration is a separate feature designed to speed up uploading files to S3 buckets by using Amazon CloudFront's globally distributed edge locations*
+- When you use Transfer Acceleration, your data is first routed to an AWS edge location over an optimized network path and then transferred to Amazon S3 over Amazon's backbone network.
+- *cross-region replication (CRR) is used to replicate objects across S3 buckets in different AWS regions*. - While CRR ensures that the data is replicated efficiently between regions, it doesn't specifically use the Transfer Acceleration feature or its underlying mechanisms.
+
+####  Amazon Guard Duty: managed threat protection service
+- continuously monitors for malicious or unauthorized behavior. 
+- GuardDuty analyzes and processes various AWS data sources, such as VPC Flow Logs, AWS CloudTrail event logs, and DNS logs. 
+- It uses threat intelligence feeds and machine learning to identify potential threats.
+- *Some of the findings GuardDuty can alert on include:*
+  + Unusual API calls
+  + Potential data exfiltration
+  + Compromised EC2 instances
+  + Reconnaissance by attackers
+  + Malware or cryptocurrency mining activity
+
+- If GuardDuty detects a potential threat, it produces a detailed security finding. 
+- You can then review these findings in the GuardDuty console or integrate them with other AWS services or third-party tools to automate responses or remediation actions.
+- **It's worth noting that while GuardDuty provides threat detection, it does not perform actual malware scanning of files within your EC2 instances**
+
+#### S3 versioning and encryption
+- When versioning is enabled on an S3 bucket, every modification to an object, including applying encryption to an unencrypted object, results in the creation of a new version of that object. 
+- The previous versions of the object are retained, and you can still access them unless they're explicitly deleted.
+- if you had an unencrypted object in a versioned S3 bucket and you decided to apply server-side encryption to it (whether with S3-managed keys, KMS, or customer-provided keys), a new version of the object would be created, and this new version would be encrypted. 
+- *The earlier, unencrypted version would still be present in the bucket until it's deleted*
+
+
+## links
+- https://www.youtube.com/watch?v=UUleX4pXLVo
