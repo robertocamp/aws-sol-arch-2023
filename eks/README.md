@@ -175,10 +175,98 @@ inputs = {
 ### deployment
 - `cd infrastructure-live-v4/dev`
 - `terragrunt run-all init`
-- `terragrunt run-all apply`
+- `terragrunt run-all plan`
 
 
 ## 2023-09-24 21:01:13
 - video: 40:55
 - have not applied to us-west-2
 - commit msg:  "plan-base-eks-us-west-2"
+
+
+## 2023-09-27 06:15:24
+
+### deployment (cont'd)
+- `cd infrastructure-live-v4/dev`
+- `terragrunt run-all init`
+- `terragrunt run-all apply`
+- note that terragrunt will determine the correct order to apply the plan:
+```
+Group 1
+- Module /Users/robert/go/src/github.com/aws-sol-arch-2023/eks/infrastructure-live-v4/dev/vpc
+
+Group 2
+- Module /Users/robert/go/src/github.com/aws-sol-arch-2023/eks/infrastructure-live-v4/dev/eks
+```
+
+### cluster verification: update kubectl
+- `export AWS_REGION=us-west-2`
+- `aws eks list-clusters`
+- `aws eks update-kubeconfig --name dev-demo --region us-west-2`
+- `k config get-contexts`
+- `k get nodes`
+
+
+### kubernetes addons
+- create a separate module to deploy k8s addons
+
+#### all kubernetes addons will have a flag to enable them
+- this will be a boolean count value: if it's "true" the count is one
+- 1-cluster-autoscaler.tf
+- eks name will be used as a prefix for the IAM role
+#### Helm Charts will be the preferred mechanism to deploy complex applications like Prometheus
+- the Helm provider needs to be authenticated
+- we will generate the Helm authentication via Terragrunt
+- to initialize the Helm provider, we need to generate a temporary token
+- you can pretty much initialize any provider that needs to authenticate to EKS using the same principle
+#### cluster autosclaer
+- the cluster needs access to the AWS API in order to discover autoscaling groups and to adjust the desired size settings of them
+- for this we need to use IAM Roles for Service Accounts (IRSA)
+- the IRSA for the autoscaler will happen in the `kube-system` namesapce
+- the kubernetes service account name is "cluster-autoscaler"
+- we create a policy that allows the autoscaler access and then attach the policy to the IAM role
+
+#### deployment
+- `cd infrastructure-live-v4/dev`
+```
+❯ tree
+.
+├── eks
+│   └── terragrunt.hcl
+├── env.hcl
+├── kubernetes-addons
+│   └── terragrunt.hcl
+├── plans
+│   └── plan01.cfg
+└── vpc
+    └── terragrunt.hcl
+```
+- `terragrunt run-all plan`
+
+#### checkout
+- `helm list -A`
+```
+helm list -A
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                           APP VERSION
+autoscaler      kube-system     1               2023-09-27 07:34:44.477254 -0500 CDT    deployed        cluster-autoscaler-9.28.0       1.26.2 
+```
+- `k get pods -n kube-system`
+  + look for autoscaler pod
+
+#### demo deployment
+- **requests** are what the container gets guaranteed, and **imits** are the maximum resources that the container can use. 
+- For a lightweight demo application, you could significantly lower the resources:
+```
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "100m" # 100 milliCPU units
+  limits:
+    memory: "128Mi"
+    cpu: "200m" # 200 milliCPU units
+```
+- `k apply -f deployment.yml`
+
+### cluster retirement
+- `cd infrastructure-live4/dev`
+- `terragrunt run-all destroy`
