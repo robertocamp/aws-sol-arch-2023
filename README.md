@@ -26,6 +26,36 @@
 - Each profile will use a set of credentials and settings, which includes things like the AWS Access Key, Secret Access Key, session token, and default region
 - Run `aws configure --profile profile-name`, replacing "profile-name" with a name for the new profile 
 - Once you've set up the profiles, you can switch between them by using the `--profile` flag with your AWS CLI commands
+- profile:
+```
+[default]
+region = us-east-2
+cli_binary_format=raw-in-base64-out
+[profile use2]
+region = us-east-2
+[profile usw2]
+region = us-west-2
+[profile platform-engineer-0]
+region = us-east-2
+role_arn = arn:aws:iam::240195868935:role/terraform
+source_profile = platform-engineer-0
+role_session_name = leson-160
+```
+
+- When the `--profile usw2` flag is used with the `aws cli` commands, it will prioritize the settings from the `[profile usw2]` section in your `~/.aws/config` file. 
+- Given that the region specified under `[profile usw2]` is `us-west-2`, the commands will run against the `us-west-2` region regardless of the `AWS_REGION` environment variable setting.
+
+To be clear on the order of precedence:
+
+1. **Command Line Options**: Anything explicitly mentioned in the command line, like `--region` or `--profile`, will take the highest precedence.
+   
+2. **Environment Variables**: If you don't specify a relevant command line option, then the AWS CLI will next look to environment variables (like `AWS_REGION`).
+
+3. **CLI Configuration Files**: If the above two aren't set or specified, it will fall back to using what's in the configuration files (like `~/.aws/config`).
+
+4. **Instance Profile**: If running on an EC2 instance with an assigned IAM role, and none of the above are specified, the instance profile will be used.
+
+So in your case, even if the `AWS_REGION` environment variable is set to `us-east-2`, using `--profile usw2` with your commands will override that and use the `us-west-2` region as specified in your `~/.aws/config` file for the `usw2` profile.
 ### other forms of authentication
 - **AWS Security Token Service (STS):** This service lets you request temporary, limited-privilege credentials for AWS Identity and Access Management (IAM) users or for users that you authenticate (federated users)
 - **IAM Roles:** 
